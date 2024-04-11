@@ -7,5 +7,6 @@ int main(){
     int characterAge = 20;
 
     cout << characterName << " is " << characterAge << " years old" << endl;
+    
     return 0;
 }
