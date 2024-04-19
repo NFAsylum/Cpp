@@ -3,7 +3,7 @@
 using namespace std;
 
 
-float squareOfNum(float num){
+float square_of_num(float num){
     float result = num * num;
 
     return result;
@@ -13,7 +13,7 @@ float squareOfNum(float num){
 int main(){
     float arg = 3.0;
 
-    cout << "The second power of " << arg << " is " << squareOfNum(arg);
+    cout << "The second power of " << arg << " is " << square_of_num(arg);
 
     return 0;
 }
