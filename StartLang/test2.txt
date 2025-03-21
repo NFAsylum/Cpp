@@ -1,0 +1,19 @@
+class Player {
+    local health = 100
+
+    public function takeDamage(amount){
+	local rage === amount
+	rage++
+	print("Current rage: " .. rage)
+	health -= amount
+	
+    }
+
+    public function getHealth() {
+        return health
+    }
+}
+
+player = Player()
+player.takeDamage(50)
+print("Current player health: " .. player.getHealth())

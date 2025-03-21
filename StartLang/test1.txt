@@ -1,0 +1,5 @@
+print("Opa")
+print(1)
+
+local variavel = 10
+print(variavel)
