@@ -1,0 +1,49 @@
+== WORKING IN PROGRESS, MOST FUNCTIONS OF THE START LANG ARE STILL BEING DEVELOPED ==
+
+Start lang is a programming language focused on development speed and readabiltiy, fusing the best of C-sharp and Lua.
+
+Start lang includes: OOP features, dynamic typing, string concatenation with double dots, and options to use logic operators as
+symbols(&&, ||, !|) or as identifiers (and, or, xor).
+
+Example code:
+
+class Account{
+    local accountType
+    local username = "Josh Smith"
+    local id = 1001
+    local level = 0
+
+    public function updateAccountType(newType){
+        if (newType == "student" or newType == "teacher"){
+	          accountType = newType
+	          return "success"
+	      }
+	      return "type not supported"
+    }
+
+    public function setUsername(newUsername){
+        username = newUsername
+    }
+
+    public function getUsername(){
+        return username
+    }
+
+    public function increaseLevel() {
+	      level++
+        return level
+    }
+}
+
+account = Account()
+print(account.updateAccountType("staff"))
+
+print("Account level: "..account.increaseLevel())
+
+
+
+(Expected) result of the example code:
+
+
+type not supported
+Account level: 1
