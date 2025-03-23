@@ -75,30 +75,36 @@ private:
             {"while", WHILE}, {"count", COUNT}, {"or", OR}, {"and", AND}, 
             {"xor", XOR}, {"not", NOT}, {"true", TRUE}, {"false", FALSE}
         };
+        //cout << "Got: " << word << endl;
         return keywords.count(word) ? keywords[word] : IDENTIFIER;
     }
 
     Token getSymbolToken(){
+        //cout << "Got: " << source[pos] << endl;
         switch(source[pos]){
-            case '\'': {
-                string value = "\'";
+            case '\'':
+                {string value = "";
                 for (int i = 1; i < source.size() - pos; i++){
-                    value += source[pos+i];
-                    if (value[i] == '\''){
+                    if (source[pos + i] == '\''){
+                        i++;
                         pos+=i;
+                        //cout<<value<<endl;
                         return Token{STRING, value};
                     }
+                    value += source[pos+i];
                 }
                 cout << "WARNING: quotation mark not closed" << endl;
                 }break;
             case '\"':
-                {string value = "\"";
+                {string value = "";
                 for (int i = 1; i < source.size() - pos; i++){
-                    value += source[pos+i];
-                    if (value[i] == '\"'){
+                    if (source[pos + i] == '\"'){
+                        i++;
                         pos+=i;
+                        //cout<<value<<endl;
                         return Token{STRING, value};
                     }
+                    value += source[pos+i];
                 }
                 cout << "WARNING: double quotation mark not closed" << endl;
                 }break;
@@ -176,8 +182,25 @@ private:
                 }
                 cout << "WARNING: divide operator incomplete" << endl;
                 break;
-            
+            case '(':
+                pos++;
+                return {LPAREN, "("};
+            case ')':
+                pos++;
+                return {RPAREN, ")"};
+            case '{':
+                pos++;
+                return {LBRACE, "{"};
+            case '}':
+                pos++;
+                return {RBRACE, "}"};
+            default:
+                cout << "Pos: " << pos << endl;
+                cout << "WARNING: unknown command " << source[pos] << endl;
+                return Token{UNKNOWN, source[pos]+""};
         }
+        cout << "REACHED HERE 100" << endl;
+        return Token{UNKNOWN, ""};
     }
 };
 
@@ -186,8 +209,8 @@ class Interpreter;
 struct Function {
     vector<Token> body;
     unordered_map<string, string> locals;
-    vector<string, string> args;
-    vector<string, string> returnValue;
+    vector<string> args;
+    vector<string> returnValue;
 };
 
 struct Class {
@@ -204,13 +227,65 @@ private:
 public:
     Interpreter() {}
 
+    //Execute all code according to the tokens received
     void execute(const vector<Token>& tokens){
+        for (int i = 0; i < tokens.size(); i++){
+            //cout << tokens[i].type << endl;
+            if (tokens[i].type == PRINT){
+                //cout << "calling method" << endl;
+                methods(tokens, i);
+            }
+        }
+        cout << "End of program" << endl;
     }
 
-    string evaluateExpression(const vector<Token>& tokens, size_t& i, const unordered_map<string, string>& locals, const unordered_map<string, string>& fields, Class& cls){
+    //Evaluate expressions such as conditional, loop and 
+    /*string evaluateExpression(const vector<Token>& tokens, size_t& i, const unordered_map<string, string>& locals, const unordered_map<string, string>& fields, Class& cls){
     }
 
+    //Execute the method of a given class
     string executeMethod(Class& cls, Function& method){
+    }*/
+    
+    //Default methods available for all the program
+    string methods(const vector<Token>& tokens, int currentIndex){
+        switch(tokens[currentIndex].type){
+            case PRINT:
+                {string value;
+                TokenType type = tokens[currentIndex].type;
+                //Ignores "print" and LPAREN
+                currentIndex += 2;
+                int LParenAmount = 1;
+                while (currentIndex < tokens.size()){
+                    type = tokens[currentIndex].type;
+                    if (type == STRING){
+                        value += tokens[currentIndex].value;
+                        //continue;
+                    }
+                    else if (type == LPAREN){
+                        LParenAmount++;
+                        //manage concats, etc
+                        
+                    }
+                    else if (type == RPAREN){
+                        LParenAmount--;
+                        if (LParenAmount == 0) {
+                            break;
+                        }
+                    }
+                    currentIndex++;
+                }
+                if (LParenAmount != 0) {
+                    cout << "WARNING: Print statement have unequal quantities of left and right parenthesis" << endl;
+                }
+                //Prints
+                cout << value << endl;
+                }
+                break;
+            default:
+                cout << "Couldnt identify method " << tokens[currentIndex].type << endl;
+        }
+        return "";
     }
 };
 
@@ -218,5 +293,12 @@ public:
 
 
 int main(int argc, char* argv[]) {
+    string source = "print(\"Hello World!\")";
+    Lexer lexer(source);
+    vector<Token> tokens = lexer.tokenize();
+    
+    Interpreter interpreter;
+    interpreter.execute(tokens);
+    
     return 0;
 }
