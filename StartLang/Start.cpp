@@ -265,7 +265,7 @@ public:
 
     //Execute all code according to the tokens received
     void execute(vector<Token>& tokens){
-        for (int i = 0; i < tokens.size(); i++){
+        for (size_t i = 0; i < tokens.size(); i++){
             TokenType type = tokens[i].type;
             //cout << tokens[i].type << endl;
             if (type == PRINT){
@@ -279,13 +279,6 @@ public:
                     continue;
                 }
                 cout << "Warning: unknown identifier after local statement " << tokens[i + 1].value << endl;
-            }
-            if (type == EQUAL ){
-                if (tokens[i-1].type == IDENTIFIER){
-                    globals[tokens[i-1].value].identifier = tokens[i+1].value;
-                    i++;
-                    continue;
-                }
             }
             if (type == INCREMENT){
                 if (tokens[i-1].type == IDENTIFIER){
@@ -317,25 +310,61 @@ public:
                     continue;
                 }
             }
+            if (type == MULTIPLY_EQUAL){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) * stoi(tokens[i+1].value);
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    i++;
+                    continue;
+                }
+            }
+            if (type == DIVIDE_EQUAL){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) / stoi(tokens[i+1].value);
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    i++;
+                    continue;
+                }
+            }
             /*if (type == PLUS){
                 if (tokens[i-1].type == IDENTIFIER){
                     if (tokens[i+1].type == NUMBER)
                 }
             }*/
+            if (type == END){
+                break;
+            }
+            //Default for EQUAL
+            evaluateExpression(tokens, i);
         }
         cout << "End of program" << endl;
     }
 
-    //Evaluate expressions such as conditional, loop and 
-    /*string evaluateExpression(const vector<Token>& tokens, size_t& i, const unordered_map<string, string>& locals, const unordered_map<string, string>& fields, Class& cls){
+    //Evaluate expressions such as arithmetic, conditional and loops
+    string evaluateExpression(vector<Token>& tokens, size_t& currentIndex){
+        switch(tokens[currentIndex].type){
+            case EQUAL:
+                if (tokens[currentIndex-1].type == IDENTIFIER){
+                    globals[tokens[currentIndex-1].value].identifier = tokens[currentIndex+1].value;
+                    currentIndex++;
+                }
+                break;
+            case IDENTIFIER:
+                break;
+            default:
+                cout << "WARNING: Expression couldn't be evaluated " << tokens[currentIndex].value << endl;
+        }
+        return "";
     }
+    //string evaluateExpression(const vector<Token>& tokens, size_t& i, const unordered_map<string, string>& locals, const unordered_map<string, string>& fields, Class& cls){
+    //}
 
     //Execute the method of a given class
-    string executeMethod(Class& cls, Function& method){
+    /*string executeMethod(Class& cls, Function& method){
     }*/
     
     //Default methods available for all the program
-    string methods(vector<Token>& tokens, int currentIndex){
+    string methods(vector<Token>& tokens, size_t& currentIndex){
         switch(tokens[currentIndex].type){
             case PRINT:
                 {string value;
@@ -373,7 +402,7 @@ public:
                 }
                 break;
             default:
-                cout << "Couldnt identify method " << tokens[currentIndex].type << endl;
+                cout << "Couldnt identify method " << tokens[currentIndex].value << endl;
         }
         return "";
     }
@@ -388,8 +417,12 @@ int main(int argc, char* argv[]) {
     "print('var: ' var)"
     "var--"
     "print('var after decrement: ' var)"
-    "var-=6"
+    "var+=6"
     "print('var after adding 6: ' var)"
+    "var*=2"
+    "print('var after multiplying by 2: ' var)"
+    "var/=3"
+    "print('var after dividing by 3: ' var)"
     ;
     Lexer lexer(source);
     vector<Token> tokens = lexer.tokenize();
