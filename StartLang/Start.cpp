@@ -14,11 +14,11 @@ enum TokenType{
     //Math operators
     PLUS, MINUS, DIVIDE, MULTIPLY, PLUS_EQUAL, MINUS_EQUAL, DIVIDE_EQUAL, MULTIPLY_EQUAL,
     //Assignment
-    LOCAL, EQUAL, DOUBLE_EQUAL, TRIPLE_EQUAL, INCREMENT, DECREMENT, SQUARED, SQUARED_ROOT,
+    LOCAL, EQUAL, TRIPLE_EQUAL, INCREMENT, DECREMENT, SQUARED, SQUARED_ROOT,
     //Other
     DOT, DOUBLE_DOT, LQUOT, RQUOT, PRINT, LBRACE, RBRACE, LPAREN, RPAREN, RETURN, END, UNKNOWN,
     //Conditional
-    IF, SWITCH, EQUATES, NOT_EQUAL, GREATER_THAN, GREATER_EQUAL_THAN, LESS_THAN, LESS_EQUAL_THAN,
+    IF, SWITCH, DOUBLE_EQUAL, NOT_EQUAL_TO, GREATER_THAN, GREATER_EQUAL_THAN, LESS_THAN, LESS_EQUAL_THAN,
     //Loop
     FOR, WHILE, COUNT,
     //Logic
@@ -29,6 +29,11 @@ struct Token{
     TokenType type;
     string value;
     string identifier;
+};
+
+struct Variable{
+    string identifier;
+    string value;
 };
 
 class Lexer {
@@ -182,6 +187,37 @@ private:
                 }
                 cout << "WARNING: divide operator incomplete" << endl;
                 break;
+            case '!':
+                if (pos+1 < source.size()){
+                    if (source[pos+1] == '='){
+                        pos+=2;
+                        return Token{NOT_EQUAL_TO, "!="};
+                    }
+                    if (source[pos+1] == '|'){
+                        pos+=2;
+                        return Token{XOR, "!|"};
+                    }
+                }
+                return Token{NOT, "!"};
+                break;
+            case '|':
+                if (pos+1 < source.size()){
+                    if (source[pos+1] == '|'){
+                        pos+=2;
+                        return Token{OR, "||"};
+                    }
+                }
+                cout << "WARNING: incomplete | operator" << endl;
+                break;
+            case '&':
+                if (pos+1 < source.size()){
+                    if (source[pos+1] == '&'){
+                        pos+=2;
+                        return Token{AND, "&&"};
+                    }
+                }
+                cout << "WARNING: incomplete & operator" << endl;
+                break;
             case '(':
                 pos++;
                 return {LPAREN, "("};
@@ -220,7 +256,7 @@ struct Class {
 
 class Interpreter{
 private:
-    unordered_map<string, string> globals;
+    unordered_map<string, Variable> globals;
     unordered_map<string, Class> classes;
     unordered_map<string, Function> functions;
 
@@ -228,13 +264,64 @@ public:
     Interpreter() {}
 
     //Execute all code according to the tokens received
-    void execute(const vector<Token>& tokens){
+    void execute(vector<Token>& tokens){
         for (int i = 0; i < tokens.size(); i++){
+            TokenType type = tokens[i].type;
             //cout << tokens[i].type << endl;
-            if (tokens[i].type == PRINT){
+            if (type == PRINT){
                 //cout << "calling method" << endl;
                 methods(tokens, i);
+                continue;
             }
+            if (type == LOCAL){
+                if (tokens[i + 1].type == IDENTIFIER){
+                    globals[tokens[i + 1].value];
+                    continue;
+                }
+                cout << "Warning: unknown identifier after local statement " << tokens[i + 1].value << endl;
+            }
+            if (type == EQUAL ){
+                if (tokens[i-1].type == IDENTIFIER){
+                    globals[tokens[i-1].value].identifier = tokens[i+1].value;
+                    i++;
+                    continue;
+                }
+            }
+            if (type == INCREMENT){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) + 1;
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    continue;
+                }
+            }
+            if (type == DECREMENT){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) - 1;
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    continue;
+                }
+            }
+            if (type == PLUS_EQUAL){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) + stoi(tokens[i+1].value);
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    i++;
+                    continue;
+                }
+            }
+            if (type == MINUS_EQUAL){
+                if (tokens[i-1].type == IDENTIFIER){
+                    int value = stoi(globals[tokens[i-1].value].identifier) - stoi(tokens[i+1].value);
+                    globals[tokens[i-1].value].identifier = to_string(value);
+                    i++;
+                    continue;
+                }
+            }
+            /*if (type == PLUS){
+                if (tokens[i-1].type == IDENTIFIER){
+                    if (tokens[i+1].type == NUMBER)
+                }
+            }*/
         }
         cout << "End of program" << endl;
     }
@@ -248,7 +335,7 @@ public:
     }*/
     
     //Default methods available for all the program
-    string methods(const vector<Token>& tokens, int currentIndex){
+    string methods(vector<Token>& tokens, int currentIndex){
         switch(tokens[currentIndex].type){
             case PRINT:
                 {string value;
@@ -258,9 +345,12 @@ public:
                 int LParenAmount = 1;
                 while (currentIndex < tokens.size()){
                     type = tokens[currentIndex].type;
-                    if (type == STRING){
+                    if (type == STRING || type == NUMBER){
                         value += tokens[currentIndex].value;
                         //continue;
+                    }
+                    else if (type == IDENTIFIER){
+                        value += globals[tokens[currentIndex].value].identifier;
                     }
                     else if (type == LPAREN){
                         LParenAmount++;
@@ -293,7 +383,14 @@ public:
 
 
 int main(int argc, char* argv[]) {
-    string source = "print(\"Hello World!\")";
+    string source =
+    "local var = 10 "
+    "print('var: ' var)"
+    "var--"
+    "print('var after decrement: ' var)"
+    "var-=6"
+    "print('var after adding 6: ' var)"
+    ;
     Lexer lexer(source);
     vector<Token> tokens = lexer.tokenize();
     
